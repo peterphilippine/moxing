@@ -1,0 +1,6 @@
+%%capture
+!pip uninstall -y torch torchvision torchaudio
+!rm -rf ~/.cache/pip/*
+!pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cu126
+!pip install mamba-ssm[causal-conv1d]
+!pip install -r requirements.txt
