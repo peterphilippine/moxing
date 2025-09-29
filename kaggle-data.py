@@ -1,4 +1,3 @@
-%%writefile /kaggle/working/data.py
 import random
 import numpy as np
 import os
