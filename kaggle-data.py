@@ -49,7 +49,7 @@ class CustomMambaDataset(Dataset):
         rng_seed=42,
         offset=0,
         length=None,
-        batch_size=32
+        batch_size=32,
         use_bf16=False,
     ):
         # Load the tokenizer
