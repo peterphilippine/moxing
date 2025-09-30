@@ -42,12 +42,6 @@ def create_block(
     if d_ssm is None:
         d_ssm = int(d_model*expand/2)
     headdim=min(64,int(d_ssm/ngroups))
-    print(d_ssm)
-    print(ngroups)
-    print(headdim)
-    nheads=int(d_ssm/headdim)
-    print(nheads)
-    assert nheads % ngroups == 0
     factory_kwargs = {"device": device, "dtype": dtype}
     mixer_cls = partial(Mamba2, layer_idx=layer_idx, d_state=d_state, headdim=headdim, d_ssm=d_ssm, ngroups=ngroups,expand=expand, **ssm_cfg, **factory_kwargs)
     norm_cls = partial(
