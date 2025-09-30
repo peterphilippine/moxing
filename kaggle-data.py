@@ -50,11 +50,9 @@ class CustomMambaDataset(Dataset):
         offset=0,
         length=None,
         batch_size=32,
-        use_bf16=False,
     ):
         # Load the tokenizer
         self.tokenizer = Tokenizer.from_file(tokenizer_file)
-        self.use_bf16=use_bf16
         # Tokenize the file and memory-map the token IDs
         token_file = txt_file
         
@@ -73,13 +71,12 @@ class CustomMambaDataset(Dataset):
         return self.data_length -self.context_len
 
     def __getitem__(self, idx):
-        dtype = torch.bfloat16 if self.use_bf16 else torch.float16
         pad_id = int(self.fim_pad)
         sample = self.tokenized_data[idx : idx + self.context_len + 1]
-        sample = torch.tensor(sample, dtype=dtype)
+        sample = torch.tensor(sample, dtype=torch.long)
         if len(sample) < self.context_len + 1:
             pad_len = (self.context_len + 1) - len(sample)
-            sample = torch.cat([sample, torch.full((pad_len,), pad_id, dtype=dtype)])
+            sample = torch.cat([sample, torch.full((pad_len,), pad_id, dtype=torch.long)])
 
         tokens = sample[:-1]
         labels = sample[1:]
