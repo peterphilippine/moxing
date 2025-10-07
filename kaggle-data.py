@@ -109,7 +109,7 @@ class MambaSampler(Sampler):
             self.pos = 0
 
     def __iter__(self):
-        if "val_indices.txt" in self.indices_file and self.pos >= len(self.available_indices):
+        if self.pos >= len(self.available_indices):
             self.pos = 0
         while self.pos < len(self.available_indices):
             idx = self.available_indices[self.pos]
