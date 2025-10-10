@@ -45,7 +45,6 @@ class CustomMambaDataset(Dataset):
         txt_file,
         tokenizer_file,
         context_len,
-        fim_pad,
         rng_seed=42,
         offset=0,
         length=None,
@@ -64,14 +63,12 @@ class CustomMambaDataset(Dataset):
         self.data_length = len(self.tokenized_data) if length is None else length
 
         self.np_rng = np.random.RandomState(seed=rng_seed)
-        self.fim_pad = torch.tensor([fim_pad])
         self.batch_size = batch_size
 
     def __len__(self):
         return self.data_length -self.context_len
 
     def __getitem__(self, idx):
-        pad_id = int(self.fim_pad)
         sample = self.tokenized_data[idx : idx + self.context_len + 1]
         sample = torch.tensor(sample, dtype=torch.long)
         if len(sample) < self.context_len + 1:
