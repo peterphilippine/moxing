@@ -37,11 +37,9 @@ def create_block(
 ):
     if ssm_cfg is None:
         ssm_cfg = {}
-    if d_state<8:
-      d_state=8
     if d_ssm is None:
         d_ssm = int(d_model*expand/2)
-    headdim=min(64,int(d_ssm/ngroups))
+    headdim=d_ssm/ngroups
     factory_kwargs = {"device": device, "dtype": dtype}
     mixer_cls = partial(Mamba2, layer_idx=layer_idx, d_state=d_state, headdim=headdim, d_ssm=d_ssm, ngroups=ngroups,expand=expand, **ssm_cfg, **factory_kwargs)
     norm_cls = partial(
@@ -103,6 +101,7 @@ class MixerModel(nn.Module):
         rms_norm: bool = False,
         initializer_cfg=None,
         fused_add_norm=False,
+        n_sub_layer=4,
         residual_in_fp32=False,
         expand=8,
         device=None,
@@ -123,10 +122,13 @@ class MixerModel(nn.Module):
         if self.fused_add_norm:
             if layer_norm_fn is None or rms_norm_fn is None:
                 raise ImportError("Failed to import Triton LayerNorm / RMSNorm kernels")
-        power = int(math.log(d_model*expand, 8))
         layers = []
         for i in range(n_layer):
-            ngroups = 8 ** (i % power)
+            main = i % n_sub_layer == 0
+            if not main:
+                ngroups=8
+                d_state=32
+                expand=2
             layers.append(create_block(
                 d_model,
                 ssm_cfg=ssm_cfg,
@@ -136,7 +138,7 @@ class MixerModel(nn.Module):
                 fused_add_norm=fused_add_norm,
                 expand=expand,
                 layer_idx=i,
-                d_state=128 // ngroups,
+                d_state=d_state,
                 ngroups=ngroups,
                 **factory_kwargs,
             ))
@@ -197,6 +199,7 @@ class Mamba2LMHeadModel(nn.Module, GenerationMixin):
         self.config = config
         d_model = config.d_model
         n_layer = config.n_layer
+        n_sub_layer=config.n_sub_layer
         vocab_size = config.vocab_size
         ssm_cfg = config.ssm_cfg
         rms_norm = config.rms_norm
@@ -212,6 +215,7 @@ class Mamba2LMHeadModel(nn.Module, GenerationMixin):
         self.backbone = MixerModel(
             d_model=d_model,
             n_layer=n_layer,
+            n_sub_layer=n_sub_layer,
             expand=expand,
             vocab_size=vocab_size,
             ssm_cfg=ssm_cfg,
