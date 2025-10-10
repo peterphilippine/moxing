@@ -103,6 +103,7 @@ class MixerModel(nn.Module):
         fused_add_norm=False,
         n_sub_layer=4,
         residual_in_fp32=False,
+        d_state=128,
         expand=8,
         device=None,
         dtype=None,
